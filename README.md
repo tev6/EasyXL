@@ -1,37 +1,54 @@
 # EasyXL
 
-[English](README.en.md) | 简体中文
+English | [简体中文](README-cn.md)
 
-一个用于 IXL 练习页面的 Tampermonkey 用户脚本：在页面右下角注入一个悬浮 UI，提取题目区域的 HTML，并通过 Kouri API 调用模型解析题目并给出答案。
+Tampermonkey userscripts for AI auto-solving questions on IXL pages. They add a floating panel to the page, extract the question-area HTML, and call different model providers to parse the question and produce an answer.
 
-## 功能
+![1774577431317](image/README/1774577431317.png)
 
-- 在 IXL 页面显示悬浮窗（可拖拽、可关闭）
-- 从页面中提取题目区域的 HTML（`section.ixl-practice-crate` / `section.question-and-submission-view` / `section.question-view`）
-- 使用 `GM_xmlhttpRequest` 发送跨域请求以绕过页面 CSP 限制
-- 将模型返回的结果展示在文本框中（格式：`Question: ...` + `Answer: ...`）
+## Features
 
-## 使用前提
+- Floating UI on IXL pages (draggable)
+- Press Ctrl (tap-and-release, not Ctrl+something) to toggle show/hide
+- Extracts the question area HTML (`section.ixl-practice-crate` / `section.question-and-submission-view` / `section.question-view`)
+- Uses `GM_xmlhttpRequest` to bypass the page CSP for cross-origin requests
+- Displays the model output in the result box (format: `Question: ...` + `Answer: ...`)
 
-- 浏览器已安装 Tampermonkey（或兼容的用户脚本管理器）
-- 一个可用的 Kouri API Key（形如 `sk-...`）
+## Prerequisites
 
-## 安装与使用
+- Tampermonkey (or a compatible userscript manager) installed in your browser
+- A valid API key for the script you use
 
-1. 打开 Tampermonkey，创建一个新脚本。
-2. 将 [easyxl.js](file:///z:/ixl-ai-solver/easyxl.js) 的内容完整粘贴进去并保存。
-3. 打开任意 IXL 练习页面（`https://*.ixl.com/*`）。
-4. 右下角会出现 “EasyXL” 悬浮窗：
-   - 输入 Kouri API Key（会保存到浏览器 `localStorage`）
-   - 可选：修改模型名（默认 `gpt-4o`，同样保存到 `localStorage`）
-   - 点击 `Parse & Solve` 开始解析并求解
+## Scripts
 
-## 配置项（本地存储）
+- Kouri: [easyxl-kouriapi.js](easyxl-kouriapi.js)
+- DeepSeek: [easyxl-deepseek.js](easyxl-deepseek.js)
+- OpenAI: [easyxl-openai.js](easyxl-openai.js)
+- Gemini: [easyxl-gemini.js](easyxl-gemini.js)
 
-- `kouri_api_key`：你的 API Key
-- `kouri_model`：模型名称（默认 `gpt-4o`）
+## Install & Use
 
-## 注意事项
+1. Open Tampermonkey and create a new script.
+2. Pick one script from the list above and copy its full content into the editor, then save.
+3. Open any IXL practice page (e.g. https://www.ixl.com/math/algebra-1/graph-solutions-to-absolute-value-inequalities).
+4. The “EasyXL” floating panel appears in the bottom-right:
+   - Enter your API key (saved to `localStorage`)
+   - Optional: change the model name
+   - Click `Parse & Solve` to start, the question will be sent to the AI
+   - When the AI finnish the question, the answer will appear in the answer box
 
-- 该脚本会把题目区域的 HTML 发送到 API 用于解析，请确保你了解并接受数据传输行为。
-- 该脚本把 API Key 存在 `localStorage`，请勿在不受信任的环境中使用。
+## Local Storage Keys
+
+- Kouri: `easyxl_kouri_api_key`, `easyxl_kouri_model`
+- DeepSeek: `easyxl_deepseek_api_key`, `easyxl_deepseek_model`
+- OpenAI: `easyxl_openai_api_key`, `easyxl_openai_model`
+- Gemini: `easyxl_gemini_api_key`, `easyxl_gemini_model`
+
+## Notes
+
+- The script sends the question-area HTML to the API for parsing. Make sure you understand and accept this behavior.
+- The API key is stored in `localStorage`. Do not use it on untrusted machines or profiles.
+
+## Contributing
+
+Issues and Pull Requests are welcome.

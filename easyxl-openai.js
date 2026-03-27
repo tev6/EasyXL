@@ -1,18 +1,20 @@
 // ==UserScript==
-// @name         EasyXL
+// @name         EasyXL (OpenAI)
 // @namespace    http://tampermonkey.net/
-// @version      1.2
-// @description  EasyXL - IXL Solver powered by Kouri AI (Bypasses CSP)
+// @version      1.0
+// @description  EasyXL - IXL Solver powered by OpenAI API (Bypasses CSP)
 // @author       You
 // @match        *://*.ixl.com/*
 // @grant        GM_xmlhttpRequest
-// @connect      api.kourichat.com
+// @connect      api.openai.com
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    const UI_ID = 'easyxl-ui';
+    const UI_ID = 'easyxl-openai-ui';
+    const STORAGE_KEY_API = 'easyxl_openai_api_key';
+    const STORAGE_KEY_MODEL = 'easyxl_openai_model';
 
     if (document.getElementById(UI_ID)) {
         console.log('EasyXL UI is already open.');
@@ -41,7 +43,7 @@
 
     const header = document.createElement('div');
     header.style.display = 'flex';
-    header.style.justifyContent = 'space-between';
+    header.style.justifyContent = 'flex-start';
     header.style.alignItems = 'center';
     header.style.paddingBottom = '10px';
     header.style.borderBottom = '1px solid rgba(148, 163, 184, 0.25)';
@@ -59,7 +61,7 @@
     title.style.letterSpacing = '0.2px';
 
     const badge = document.createElement('span');
-    badge.innerText = 'AI';
+    badge.innerText = 'OpenAI';
     badge.style.fontSize = '11px';
     badge.style.fontWeight = '700';
     badge.style.padding = '3px 8px';
@@ -70,33 +72,7 @@
 
     titleWrap.appendChild(title);
     titleWrap.appendChild(badge);
-
-    const closeBtn = document.createElement('button');
-    closeBtn.innerText = '✕';
-    closeBtn.style.cursor = 'pointer';
-    closeBtn.style.background = 'transparent';
-    closeBtn.style.border = '1px solid transparent';
-    closeBtn.style.width = '30px';
-    closeBtn.style.height = '30px';
-    closeBtn.style.borderRadius = '10px';
-    closeBtn.style.fontSize = '16px';
-    closeBtn.style.lineHeight = '28px';
-    closeBtn.style.color = 'rgba(15, 23, 42, 0.55)';
-    closeBtn.style.display = 'inline-flex';
-    closeBtn.style.alignItems = 'center';
-    closeBtn.style.justifyContent = 'center';
-    closeBtn.onmouseover = () => {
-        closeBtn.style.background = 'rgba(15, 23, 42, 0.06)';
-        closeBtn.style.color = 'rgba(15, 23, 42, 0.85)';
-    };
-    closeBtn.onmouseout = () => {
-        closeBtn.style.background = 'transparent';
-        closeBtn.style.color = 'rgba(15, 23, 42, 0.55)';
-    };
-    closeBtn.onclick = () => document.body.removeChild(ui);
-
     header.appendChild(titleWrap);
-    header.appendChild(closeBtn);
     ui.appendChild(header);
 
     function applyFieldStyle(el) {
@@ -123,21 +99,21 @@
     }
 
     const apiKeyInput = document.createElement('input');
-    apiKeyInput.type = 'password';
-    apiKeyInput.placeholder = 'Kouri API Key (sk-...)';
-    apiKeyInput.value = localStorage.getItem('kouri_api_key') || '';
+    apiKeyInput.type = 'text';
+    apiKeyInput.placeholder = 'OpenAI API Key (sk-...)';
+    apiKeyInput.value = localStorage.getItem(STORAGE_KEY_API) || '';
     applyFieldStyle(apiKeyInput);
     addFocusRing(apiKeyInput);
-    apiKeyInput.onchange = (e) => localStorage.setItem('kouri_api_key', e.target.value);
+    apiKeyInput.onchange = (e) => localStorage.setItem(STORAGE_KEY_API, e.target.value);
     ui.appendChild(apiKeyInput);
 
     const modelInput = document.createElement('input');
     modelInput.type = 'text';
     modelInput.placeholder = 'Model (e.g., gpt-4o)';
-    modelInput.value = localStorage.getItem('kouri_model') || 'gpt-4o';
+    modelInput.value = localStorage.getItem(STORAGE_KEY_MODEL) || 'gpt-4o';
     applyFieldStyle(modelInput);
     addFocusRing(modelInput);
-    modelInput.onchange = (e) => localStorage.setItem('kouri_model', e.target.value);
+    modelInput.onchange = (e) => localStorage.setItem(STORAGE_KEY_MODEL, e.target.value);
     ui.appendChild(modelInput);
 
     const parseBtn = document.createElement('button');
@@ -176,18 +152,34 @@
 
     document.body.appendChild(ui);
 
+    function setButtonIdle() {
+        parseBtn.innerText = 'Parse & Solve';
+        parseBtn.disabled = false;
+        parseBtn.style.background = 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)';
+        parseBtn.style.boxShadow = '0 10px 24px rgba(37, 99, 235, 0.22)';
+    }
+
+    function setButtonBusy() {
+        parseBtn.innerText = 'Solving...';
+        parseBtn.disabled = true;
+        parseBtn.style.background = 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)';
+        parseBtn.style.boxShadow = 'none';
+        parseBtn.style.transform = 'none';
+        parseBtn.style.filter = 'none';
+    }
+
     parseBtn.onclick = () => {
         const apiKey = apiKeyInput.value.trim();
         const model = modelInput.value.trim() || 'gpt-4o';
 
         if (!apiKey) {
-            alert('Please enter your Kouri API Key.');
+            alert('Please enter your OpenAI API Key.');
             return;
         }
 
-        let section = document.querySelector('section.ixl-practice-crate') ||
-                      document.querySelector('section.question-and-submission-view') ||
-                      document.querySelector('section.question-view');
+        const section = document.querySelector('section.ixl-practice-crate') ||
+                        document.querySelector('section.question-and-submission-view') ||
+                        document.querySelector('section.question-view');
 
         if (!section) {
             resultArea.value = 'Error: Could not find question HTML on this page.';
@@ -199,18 +191,13 @@
         const systemPrompt = "You are an expert math solver specializing in parsing complex web code. Your task is to: 1. **Analyze the provided HTML code block** to accurately determine the exact math problem (function evaluation, equation, etc.). Convert all ambiguous notation (like nested divs for fractions, or implicit multiplication) into a clear mathematical text string. 2. **Solve the math problem.** Always follow standard order of operations (PEMDAS/BODMAS): Parentheses/Brackets, Exponents/Orders, Multiplication-Division (left to right), Addition-Subtraction (left to right). 3. **Return ONLY in this exact plain text format, nothing else:** Question: [clear text of the math problem you interpreted] Answer: [final calculated numerical answer or expression]";
         const userPrompt = `--- START QUESTION HTML ---\n${rawHtml}\n--- END QUESTION HTML ---`;
 
-        parseBtn.innerText = 'Solving...';
-        parseBtn.disabled = true;
-        parseBtn.style.background = 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)';
-        parseBtn.style.boxShadow = 'none';
-        parseBtn.style.transform = 'none';
-        parseBtn.style.filter = 'none';
+        setButtonBusy();
         resultArea.value = 'Sending request to AI...';
 
         if (typeof GM_xmlhttpRequest !== "undefined") {
             GM_xmlhttpRequest({
                 method: "POST",
-                url: "https://api.kourichat.com/v1/chat/completions",
+                url: "https://api.openai.com/v1/chat/completions",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${apiKey}`
@@ -227,33 +214,23 @@
                     if (response.status >= 200 && response.status < 300) {
                         try {
                             const data = JSON.parse(response.responseText);
-                            resultArea.value = data.choices[0].message.content.trim();
+                            resultArea.value = data.choices?.[0]?.message?.content?.trim?.() || response.responseText;
                         } catch (e) {
                             resultArea.value = `Parse Error: ${e.message}\nRaw: ${response.responseText}`;
                         }
                     } else {
                         resultArea.value = `API Error ${response.status}: ${response.responseText}`;
                     }
-
-                    parseBtn.innerText = 'Parse & Solve';
-                    parseBtn.disabled = false;
-                    parseBtn.style.background = 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)';
-                    parseBtn.style.boxShadow = '0 10px 24px rgba(37, 99, 235, 0.22)';
+                    setButtonIdle();
                 },
                 onerror: function() {
                     resultArea.value = 'Request failed (Network Error). Check your API Key or connection.';
-                    parseBtn.innerText = 'Parse & Solve';
-                    parseBtn.disabled = false;
-                    parseBtn.style.background = 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)';
-                    parseBtn.style.boxShadow = '0 10px 24px rgba(37, 99, 235, 0.22)';
+                    setButtonIdle();
                 }
             });
         } else {
             resultArea.value = 'Error: GM_xmlhttpRequest is not defined. Please run this script via Tampermonkey extension to bypass CSP.';
-            parseBtn.innerText = 'Parse & Solve';
-            parseBtn.disabled = false;
-            parseBtn.style.background = 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)';
-            parseBtn.style.boxShadow = '0 10px 24px rgba(37, 99, 235, 0.22)';
+            setButtonIdle();
         }
     };
 
@@ -297,6 +274,31 @@
         }
     }
 
-    console.log('EasyXL userscript loaded successfully.');
+    let ctrlDown = false;
+    let ctrlUsedAsModifier = false;
+
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'ControlLeft' || e.code === 'ControlRight') {
+            if (!e.repeat) {
+                ctrlDown = true;
+                ctrlUsedAsModifier = false;
+            }
+            return;
+        }
+        if (ctrlDown) {
+            ctrlUsedAsModifier = true;
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        if (e.code !== 'ControlLeft' && e.code !== 'ControlRight') return;
+        if (ctrlDown && !ctrlUsedAsModifier) {
+            ui.style.display = ui.style.display === 'none' ? 'flex' : 'none';
+        }
+        ctrlDown = false;
+        ctrlUsedAsModifier = false;
+    });
+
+    console.log('EasyXL (OpenAI) userscript loaded successfully.');
 })();
 
