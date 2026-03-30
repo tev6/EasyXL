@@ -11,8 +11,10 @@ Tampermonkey userscripts for AI auto-solving questions on IXL pages. They add a 
 - Floating UI on IXL pages (draggable)
 - Press Ctrl (tap-and-release, not Ctrl+something) to toggle show/hide
 - Extracts the question area HTML (`section.ixl-practice-crate` / `section.question-and-submission-view` / `section.question-view`)
+- **User Notes**: Allows you to add custom instructions or context before parsing, which will be sent to the AI.
 - Uses `GM_xmlhttpRequest` to bypass the page CSP for cross-origin requests
-- Displays the model output in the result box (format: `Question: ...` + `Answer: ...`)
+- **Smart Answer Extraction**: Instructs AI to perform step-by-step reasoning but only extracts and displays the final concise answer.
+- **Supports rich Markdown rendering and Math equations (using KaTeX)** in the result box
 
 ## Prerequisites
 

@@ -11,8 +11,10 @@
 - 可拖拽的 IXL 页面悬浮窗
 - 单独按下并松开 Ctrl 可隐藏/显示窗口（不会影响 Ctrl+C 等组合键）
 - 从页面中提取题目区域的 HTML（`section.ixl-practice-crate` / `section.question-and-submission-view` / `section.question-view`）
+- **用户注释功能**：允许在解析前添加自定义提示或解题要求，这些备注会直接发送给 AI。
 - 使用 `GM_xmlhttpRequest` 发送跨域请求以绕过页面 CSP 限制
-- 将模型返回的结果展示在文本框中（格式：`Question: ...` + `Answer: ...`）
+- **智能答案提取**：指示 AI 进行逐步推理（Chain of Thought），但程序会自动提取并仅展示最终的精简答案。
+- **支持在结果框中渲染富文本 Markdown 和数学公式（基于 KaTeX）**
 
 ## 使用前提
 

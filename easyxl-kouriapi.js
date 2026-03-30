@@ -6,11 +6,26 @@
 // @author       You
 // @match        *://*.ixl.com/*
 // @grant        GM_xmlhttpRequest
+// @grant        GM_addStyle
+// @grant        GM_getResourceText
+// @require      https://cdn.jsdelivr.net/npm/marked/marked.min.js
+// @require      https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js
+// @resource     KATEX_CSS https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css
 // @connect      api.kourichat.com
 // ==/UserScript==
 
 (function() {
     'use strict';
+
+    if (typeof GM_addStyle !== 'undefined' && typeof GM_getResourceText !== 'undefined') {
+        const css = GM_getResourceText('KATEX_CSS');
+        if (css) GM_addStyle(css);
+    } else {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css';
+        document.head.appendChild(link);
+    }
 
     const UI_ID = 'easyxl-kouri-ui';
     const STORAGE_KEY_API = 'easyxl_kouri_api_key';
@@ -27,12 +42,13 @@
     ui.style.bottom = '20px';
     ui.style.right = '20px';
     ui.style.width = '360px';
-    ui.style.background = 'rgba(255, 255, 255, 0.92)';
-    ui.style.border = '1px solid rgba(148, 163, 184, 0.35)';
+    // Remove fixed height to let the result box expand automatically if needed
+    ui.style.background = 'linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.58) 100%)';
+    ui.style.border = '1px solid rgba(255, 255, 255, 0.45)';
     ui.style.borderRadius = '14px';
-    ui.style.boxShadow = '0 18px 60px rgba(2, 6, 23, 0.25)';
-    ui.style.backdropFilter = 'blur(14px)';
-    ui.style.webkitBackdropFilter = 'blur(14px)';
+    ui.style.boxShadow = '0 18px 55px rgba(2, 6, 23, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.40)';
+    ui.style.backdropFilter = 'blur(18px) saturate(180%)';
+    ui.style.webkitBackdropFilter = 'blur(18px) saturate(180%)';
     ui.style.zIndex = '999999';
     ui.style.fontFamily = "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, 'Noto Sans', 'Helvetica Neue', sans-serif";
     ui.style.padding = '14px';
@@ -78,9 +94,9 @@
     function applyFieldStyle(el) {
         el.style.width = '100%';
         el.style.padding = '10px 10px';
-        el.style.border = '1px solid rgba(148, 163, 184, 0.45)';
+        el.style.border = '1px solid rgba(255, 255, 255, 0.55)';
         el.style.borderRadius = '12px';
-        el.style.background = 'rgba(248, 250, 252, 0.85)';
+        el.style.background = 'rgba(255, 255, 255, 0.55)';
         el.style.color = '#0f172a';
         el.style.outline = 'none';
         el.style.boxSizing = 'border-box';
@@ -116,6 +132,27 @@
     modelInput.onchange = (e) => localStorage.setItem(STORAGE_KEY_MODEL, e.target.value);
     ui.appendChild(modelInput);
 
+    // User Notes Input
+    const notesLabel = document.createElement('label');
+    notesLabel.innerText = '用户注释 (Optional):';
+    notesLabel.style.display = 'block';
+    notesLabel.style.marginBottom = '5px';
+    notesLabel.style.fontSize = '12px';
+    notesLabel.style.color = '#64748b';
+    ui.appendChild(notesLabel);
+
+    const notesInput = document.createElement('textarea');
+    notesInput.placeholder = '添加自定义指令，如：只输出最终答案...';
+    notesInput.style.height = '50px';
+    notesInput.style.resize = 'vertical';
+    notesInput.value = localStorage.getItem('easyxl_kouri_notes') || '';
+    notesInput.addEventListener('input', () => {
+        localStorage.setItem('easyxl_kouri_notes', notesInput.value);
+    });
+    applyFieldStyle(notesInput);
+    addFocusRing(notesInput);
+    ui.appendChild(notesInput);
+
     const parseBtn = document.createElement('button');
     parseBtn.innerText = 'Parse & Solve';
     parseBtn.style.padding = '10px 12px';
@@ -141,16 +178,92 @@
     };
     ui.appendChild(parseBtn);
 
-    const resultArea = document.createElement('textarea');
-    resultArea.style.height = '140px';
-    resultArea.style.resize = 'vertical';
-    resultArea.readOnly = true;
-    resultArea.placeholder = 'Result will appear here...';
+    const resultArea = document.createElement('div');
+    resultArea.style.height = '160px';
+    resultArea.style.overflowY = 'auto';
+    resultArea.style.wordWrap = 'break-word';
+    resultArea.innerHTML = '<span style="color: #64748b;">Result will appear here...</span>';
     applyFieldStyle(resultArea);
     addFocusRing(resultArea);
+    // Extra styles for markdown content rendering
+    resultArea.style.fontSize = '14px';
+    resultArea.style.lineHeight = '1.5';
+    resultArea.style.userSelect = 'text';
     ui.appendChild(resultArea);
 
     document.body.appendChild(ui);
+
+    function renderMarkdownWithMath(text) {
+        if (!text) return '';
+        
+        // 1. Extract math blocks and replace with placeholders
+        const mathBlocks = [];
+        let processedText = text;
+
+        // Block math: \[ ... \] or $$ ... $$
+        processedText = processedText.replace(/\\\[([\s\S]*?)\\\]/g, (match, p1) => {
+            mathBlocks.push({ type: 'block', text: p1 });
+            return `%%%MATH_BLOCK_${mathBlocks.length - 1}%%%`;
+        });
+        processedText = processedText.replace(/\$\$([\s\S]*?)\$\$/g, (match, p1) => {
+            mathBlocks.push({ type: 'block', text: p1 });
+            return `%%%MATH_BLOCK_${mathBlocks.length - 1}%%%`;
+        });
+
+        // Inline math: \( ... \) or $ ... $
+        processedText = processedText.replace(/\\\(([\s\S]*?)\\\)/g, (match, p1) => {
+            mathBlocks.push({ type: 'inline', text: p1 });
+            return `%%%MATH_INLINE_${mathBlocks.length - 1}%%%`;
+        });
+        processedText = processedText.replace(/(^|[^\\])\$([^\$]+?)\$/g, (match, p1, p2) => {
+            mathBlocks.push({ type: 'inline', text: p2 });
+            return `${p1}%%%MATH_INLINE_${mathBlocks.length - 1}%%%`;
+        });
+
+        // 2. Parse Markdown
+        let html = '';
+        if (typeof marked !== 'undefined') {
+            html = marked.parse(processedText);
+        } else {
+            // Fallback if marked is not loaded
+            html = processedText.replace(/\n/g, '<br>');
+        }
+
+        // 3. Restore math blocks and render with KaTeX
+        if (typeof katex !== 'undefined') {
+            html = html.replace(/%%%MATH_BLOCK_(\d+)%%%/g, (match, i) => {
+                const block = mathBlocks[i];
+                try {
+                    return katex.renderToString(block.text, { displayMode: true, throwOnError: false });
+                } catch (e) {
+                    return `\\[${block.text}\\]`;
+                }
+            });
+
+            html = html.replace(/%%%MATH_INLINE_(\d+)%%%/g, (match, i) => {
+                const block = mathBlocks[i];
+                try {
+                    return katex.renderToString(block.text, { displayMode: false, throwOnError: false });
+                } catch (e) {
+                    return `\\(${block.text}\\)`;
+                }
+            });
+        } else {
+            // Fallback if katex is not loaded
+            html = html.replace(/%%%MATH_BLOCK_(\d+)%%%/g, (match, i) => `\\[${mathBlocks[i].text}\\]`);
+            html = html.replace(/%%%MATH_INLINE_(\d+)%%%/g, (match, i) => `\\(${mathBlocks[i].text}\\)`);
+        }
+
+        return html;
+    }
+
+    function setResult(content, isError = false) {
+        if (isError) {
+            resultArea.innerHTML = `<span style="color: #ef4444; font-weight: 500;">${content.replace(/\n/g, '<br>')}</span>`;
+        } else {
+            resultArea.innerHTML = renderMarkdownWithMath(content);
+        }
+    }
 
     function setButtonIdle() {
         parseBtn.innerText = 'Parse & Solve';
@@ -170,7 +283,7 @@
 
     parseBtn.onclick = () => {
         const apiKey = apiKeyInput.value.trim();
-        const model = modelInput.value.trim() || 'gpt-4o';
+        const model = modelInput.value.trim() || 'deepseek-chat';
 
         if (!apiKey) {
             alert('Please enter your Kouri API Key.');
@@ -182,17 +295,22 @@
                         document.querySelector('section.question-view');
 
         if (!section) {
-            resultArea.value = 'Error: Could not find question HTML on this page.';
+            setResult('Error: Could not find question HTML on this page.', true);
             return;
         }
 
         const rawHtml = section.outerHTML;
 
-        const systemPrompt = "You are an expert math solver specializing in parsing complex web code. Your task is to: 1. **Analyze the provided HTML code block** to accurately determine the exact math problem (function evaluation, equation, etc.). Convert all ambiguous notation (like nested divs for fractions, or implicit multiplication) into a clear mathematical text string. 2. **Solve the math problem.** Always follow standard order of operations (PEMDAS/BODMAS): Parentheses/Brackets, Exponents/Orders, Multiplication-Division (left to right), Addition-Subtraction (left to right). 3. **Return ONLY in this exact plain text format, nothing else:** Question: [clear text of the math problem you interpreted] Answer: [final calculated numerical answer or expression]";
-        const userPrompt = `--- START QUESTION HTML ---\n${rawHtml}\n--- END QUESTION HTML ---`;
+        const systemPrompt = "You are an expert math solver. Your task is to: 1. **Analyze the provided HTML code block** to determine the exact math problem. Convert all ambiguous notation into a clear mathematical text string. 2. **Solve the problem step-by-step.** Follow standard order of operations (PEMDAS/BODMAS). Write down your solving steps. 3. **Format your final output:** You MUST enclose your final, concise answer within <answer>...</answer> tags. For example: <answer>42</answer> or <answer>x = 5</answer>.";
+        let userPrompt = `--- START QUESTION HTML ---\n${rawHtml}\n--- END QUESTION HTML ---`;
+
+        const userNotes = notesInput.value.trim();
+        if (userNotes) {
+            userPrompt += `\n\n--- USER NOTES ---\n${userNotes}\n--- END USER NOTES ---`;
+        }
 
         setButtonBusy();
-        resultArea.value = 'Sending request to AI...';
+        setResult('Sending request to AI...');
 
         if (typeof GM_xmlhttpRequest !== "undefined") {
             GM_xmlhttpRequest({
@@ -214,22 +332,24 @@
                     if (response.status >= 200 && response.status < 300) {
                         try {
                             const data = JSON.parse(response.responseText);
-                            resultArea.value = data.choices?.[0]?.message?.content?.trim?.() || response.responseText;
+                            const text = data.choices?.[0]?.message?.content?.trim?.() || response.responseText;
+                            const match = text.match(/<answer>([\s\S]*?)<\/answer>/i);
+                            setResult(match ? match[1].trim() : text);
                         } catch (e) {
-                            resultArea.value = `Parse Error: ${e.message}\nRaw: ${response.responseText}`;
+                            setResult(`Parse Error: ${e.message}\nRaw: ${response.responseText}`, true);
                         }
                     } else {
-                        resultArea.value = `API Error ${response.status}: ${response.responseText}`;
+                        setResult(`API Error ${response.status}: ${response.responseText}`, true);
                     }
                     setButtonIdle();
                 },
                 onerror: function() {
-                    resultArea.value = 'Request failed (Network Error). Check your API Key or connection.';
+                    setResult('Request failed (Network Error). Check your API Key or connection.', true);
                     setButtonIdle();
                 }
             });
         } else {
-            resultArea.value = 'Error: GM_xmlhttpRequest is not defined. Please run this script via Tampermonkey extension to bypass CSP.';
+            setResult('Error: GM_xmlhttpRequest is not defined. Please run this script via Tampermonkey extension to bypass CSP.', true);
             setButtonIdle();
         }
     };
