@@ -21,6 +21,15 @@
 - 浏览器已安装 Tampermonkey（或兼容的用户脚本管理器）
 - 准备好你要使用的脚本对应的 API Key
 
+## 书签版本 Bookmarklet（无需安装插件）
+
+如果你不想安装 Tampermonkey，或者在无法安装插件的设备上，可以使用**书签版本（Bookmarklet）**（属于实验性功能，可能会受限于页面的 CSP 跨域策略）。
+
+1. 在浏览器的书签栏中创建一个新书签（网页收藏）。
+2. 将名称设为“EasyXL Solver”。
+3. 复制 `bookmarklet.txt` 文件中的**所有单行内容**，粘贴到书签的“网址（URL）”输入框中并保存。
+4. 当你在 IXL 题目页面时，点击这个书签即可直接在页面中注入并唤起 EasyXL 界面！
+
 ## 脚本列表
 
 - Kouri： [easyxl-kouriapi.js](easyxl-kouriapi.js)

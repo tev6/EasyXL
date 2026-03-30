@@ -21,6 +21,15 @@ Tampermonkey userscripts for AI auto-solving questions on IXL pages. They add a 
 - Tampermonkey (or a compatible userscript manager) installed in your browser
 - A valid API key for the script you use
 
+## Bookmarklet Version (No Extension Required)
+
+If you don't want to install Tampermonkey, or are on a device where extensions are blocked, you can use the **Bookmarklet version** (experimental, might be subject to page CSP restrictions).
+
+1. Open your browser bookmarks manager and create a new bookmark.
+2. Name it "EasyXL Solver".
+3. Copy the entire contents of `bookmarklet.txt` and paste it into the "URL" field.
+4. When you are on an IXL question page, simply click the bookmark to inject the EasyXL interface!
+
 ## Scripts
 
 - Kouri: [easyxl-kouriapi.js](easyxl-kouriapi.js)
