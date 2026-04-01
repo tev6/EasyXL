@@ -77,19 +77,19 @@
             defaultBaseUrl: 'https://api.deepseek.com/chat/completions',
             fallbackBaseUrl: 'https://api.deepseek.com/v1/chat/completions',
             models: ['deepseek-chat', 'deepseek-reasoner'],
-            apiKeyPlaceholder: '输入 DeepSeek API Key',
+            apiKeyPlaceholder: 'Enter DeepSeek API Key',
             baseUrlPlaceholder: 'https://api.deepseek.com/chat/completions',
-            notesPlaceholder: '添加自定义指令，如：只输出最终答案...'
+            notesPlaceholder: 'Add Custom Instructions. e.g. Only output the final answer...'
         },
         kouri: {
             label: 'Kouri',
             kind: 'openai',
             defaultModel: 'gpt-4o',
             defaultBaseUrl: 'https://api.kourichat.com/v1/chat/completions',
-            models: ['gpt-4o', 'deepseek-chat', 'claude-3-5-sonnet-latest'],
-            apiKeyPlaceholder: '输入 Kouri API Key',
+            models: ['gpt-4o', 'deepseek-chat', 'claude-3-5-sonnet-latest', 'deepseek-v3', 'deepseek-v3.1', 'deepseek-v3.2', 'gpt-5', 'gpt-5-chat'],
+            apiKeyPlaceholder: 'Enter Kouri API Key',
             baseUrlPlaceholder: 'https://api.kourichat.com/v1/chat/completions',
-            notesPlaceholder: '添加自定义指令，如：只输出最终答案...'
+            notesPlaceholder: 'Add Custom Instructions. e.g. Only output the final answer...'
         }
     };
 
@@ -298,7 +298,7 @@
     const settingsButton = document.createElement('button');
     settingsButton.type = 'button';
     settingsButton.innerText = '⚙';
-    settingsButton.title = '打开设置';
+    settingsButton.title = 'Settings';
     settingsButton.style.width = '34px';
     settingsButton.style.height = '34px';
     settingsButton.style.borderRadius = '999px';
@@ -351,7 +351,7 @@
         return label;
     }
 
-    const notesLabel = createLabel('用户注释');
+    const notesLabel = createLabel('User Notes');
     ui.appendChild(notesLabel);
 
     const notesInput = document.createElement('textarea');
@@ -367,7 +367,7 @@
 
     const parseBtn = document.createElement('button');
     parseBtn.type = 'button';
-    parseBtn.innerText = '解析并求解';
+    parseBtn.innerText = 'Parse and Solve';
     parseBtn.style.padding = '10px 12px';
     parseBtn.style.border = '1px solid rgba(30, 64, 175, 0.20)';
     parseBtn.style.borderRadius = '12px';
@@ -395,7 +395,7 @@
     resultArea.style.height = '180px';
     resultArea.style.overflowY = 'auto';
     resultArea.style.wordWrap = 'break-word';
-    resultArea.innerHTML = '<span style="color: #64748b;">结果会显示在这里...</span>';
+    resultArea.innerHTML = '<span style="color: #64748b;">Results will be displayed here...</span>';
     resultArea.style.fontSize = '14px';
     resultArea.style.lineHeight = '1.5';
     resultArea.style.userSelect = 'text';
@@ -430,7 +430,7 @@
     settingsHeader.style.alignItems = 'center';
 
     const settingsTitle = document.createElement('div');
-    settingsTitle.innerText = '设置';
+    settingsTitle.innerText = 'Settings';
     settingsTitle.style.fontSize = '15px';
     settingsTitle.style.fontWeight = '700';
     settingsTitle.style.color = '#0f172a';
@@ -438,7 +438,7 @@
     const settingsCloseBtn = document.createElement('button');
     settingsCloseBtn.type = 'button';
     settingsCloseBtn.innerText = '×';
-    settingsCloseBtn.title = '关闭设置';
+    settingsCloseBtn.title = 'Close Settings';
     settingsCloseBtn.style.width = '34px';
     settingsCloseBtn.style.height = '34px';
     settingsCloseBtn.style.borderRadius = '999px';
@@ -461,7 +461,7 @@
     settingsMessage.style.lineHeight = '1.45';
     settingsPanel.appendChild(settingsMessage);
 
-    const providerLabel = createLabel('AI 供应商');
+    const providerLabel = createLabel('Provider');
     const providerSelect = document.createElement('select');
     applyFieldStyle(providerSelect);
     addFocusRing(providerSelect);
@@ -482,7 +482,7 @@
     settingsPanel.appendChild(apiKeyLabel);
     settingsPanel.appendChild(apiKeyInput);
 
-    const baseUrlLabel = createLabel('基础 URL');
+    const baseUrlLabel = createLabel('Base URL');
     const baseUrlInput = document.createElement('input');
     baseUrlInput.type = 'text';
     applyFieldStyle(baseUrlInput);
@@ -490,7 +490,7 @@
     settingsPanel.appendChild(baseUrlLabel);
     settingsPanel.appendChild(baseUrlInput);
 
-    const modelLabel = createLabel('模型');
+    const modelLabel = createLabel('Model');
     const modelSelect = document.createElement('select');
     applyFieldStyle(modelSelect);
     addFocusRing(modelSelect);
@@ -532,7 +532,7 @@
         const provider = getCurrentProvider();
         const config = getProviderConfig();
         badge.innerText = provider.label;
-        notesLabel.innerText = `用户注释（${provider.label}）`;
+        notesLabel.innerText = `User Notes (${provider.label})`;
         notesInput.placeholder = provider.notesPlaceholder;
         notesInput.value = config.notes || '';
     }
@@ -548,7 +548,7 @@
         });
         const customOption = document.createElement('option');
         customOption.value = CUSTOM_MODEL_VALUE;
-        customOption.textContent = '自定义模型';
+        customOption.textContent = 'Custom Model';
         modelSelect.appendChild(customOption);
         if (provider.models.includes(modelValue)) {
             modelSelect.value = modelValue;
@@ -570,9 +570,9 @@
         apiKeyInput.value = config.apiKey || '';
         baseUrlInput.placeholder = provider.baseUrlPlaceholder;
         baseUrlInput.value = config.baseUrl || provider.defaultBaseUrl;
-        customModelInput.placeholder = `输入 ${provider.label} 自定义模型`;
+        customModelInput.placeholder = `Input Custom Model (${provider.label})`;
         renderModelSelect(providerId, config.model || provider.defaultModel);
-        settingsHint.innerText = `当前供应商：${provider.label}。如请求失败，请检查 API Key、模型与基础 URL 是否正确。`;
+        settingsHint.innerText = `Current Provider: ${provider.label}. If requests fail, check API Key, model, and base URL.`;
     }
 
     function openSettings(message) {
@@ -591,18 +591,18 @@
         const provider = PROVIDERS[providerId];
         const config = getProviderConfig(providerId);
         if (!config.apiKey.trim()) {
-            return `${provider.label} 的 API Key 不能为空。`;
+            return `${provider.label} API Key cannot be empty.`;
         }
         if (!config.model.trim()) {
-            return `${provider.label} 的模型不能为空。`;
+            return `${provider.label} Model cannot be empty.`;
         }
         if (!config.baseUrl.trim()) {
-            return `${provider.label} 的基础 URL 不能为空。`;
+            return `${provider.label} Base URL cannot be empty.`;
         }
         try {
             new URL(config.baseUrl.trim());
         } catch (error) {
-            return `${provider.label} 的基础 URL 格式无效。`;
+            return `${provider.label} Base URL format is invalid.`;
         }
         return '';
     }
@@ -670,14 +670,14 @@
     }
 
     function setButtonIdle() {
-        parseBtn.innerText = '解析并求解';
+        parseBtn.innerText = 'Parse and Solve';
         parseBtn.disabled = false;
         parseBtn.style.background = 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)';
         parseBtn.style.boxShadow = '0 10px 24px rgba(37, 99, 235, 0.22)';
     }
 
     function setButtonBusy() {
-        parseBtn.innerText = '求解中...';
+        parseBtn.innerText = 'Solving Math...';
         parseBtn.disabled = true;
         parseBtn.style.background = 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)';
         parseBtn.style.boxShadow = 'none';
@@ -696,10 +696,10 @@
     }
 
     function buildPrompts(rawHtml, notes) {
-        const systemPrompt = 'You are an expert math solver. Your task is to: 1. Analyze the provided HTML code block to determine the exact math problem. Convert all ambiguous notation into a clear mathematical text string. 2. Solve the problem step-by-step. Follow standard order of operations (PEMDAS/BODMAS). Write down your solving steps. 3. Format your final output: You MUST enclose your final, concise answer within <answer>...</answer> tags. For example: <answer>42</answer> or <answer>x = 5</answer>.';
+        const systemPrompt = 'You are an expert math solver. Your task is to: 1. Analyze the provided HTML code block to determine the exact math problem. Convert all ambiguous notation into a clear mathematical text string. 2. Solve the problem step-by-step. Follow standard order of operations. **Write down your solving steps.** 3. Format your final output: **You MUST enclose your final, concise answer within <answer>...</answer> tags.** For example: <answer>42</answer> or <answer>x = 5</answer>.';
         let userPrompt = `--- START QUESTION HTML ---\n${rawHtml}\n--- END QUESTION HTML ---`;
         if (notes.trim()) {
-            userPrompt += `\n\n--- USER NOTES ---\n${notes.trim()}\n--- END USER NOTES ---`;
+            userPrompt += `\n\n--- USER ADDITIONAL NOTES ---\n${notes.trim()}\n--- END USER ADDITIONAL NOTES ---`;
         }
         return { systemPrompt, userPrompt };
     }
@@ -810,7 +810,7 @@
 
     async function solveQuestion() {
         if (typeof GM_xmlhttpRequest === 'undefined') {
-            const message = 'GM_xmlhttpRequest 不可用。请在 Tampermonkey 中运行脚本。';
+            const message = 'GM_xmlhttpRequest is not available. Please run the script in Tampermonkey.';
             setResult(message, true);
             openSettings(message);
             return;
@@ -822,19 +822,19 @@
         const validationMessage = validateConfig(providerId);
         if (validationMessage) {
             setResult(validationMessage, true);
-            openSettings(`${validationMessage} 请修正设置后重试。`);
+            openSettings(`${validationMessage} Please correct the settings and try again.`);
             return;
         }
 
         const section = findQuestionSection();
         if (!section) {
-            setResult('未找到当前题目的 HTML 区域。请确认已打开 IXL 练习题页面。', true);
+            setResult('No HTML section found for the current question. Please ensure you are on the IXL exercise page.', true);
             return;
         }
 
         clearSettingsMessage();
         setButtonBusy();
-        setResult('正在向 AI 发送请求...');
+        setResult('Sending request to the AI...');
 
         try {
             const { systemPrompt, userPrompt } = buildPrompts(section.outerHTML, config.notes || '');
@@ -842,7 +842,7 @@
             const answer = extractAnswer(text);
             setResult(answer || text);
         } catch (error) {
-            const message = `${provider.label} 请求失败：${error.message || '未知错误'}。请检查 API Key、模型和基础 URL。`;
+            const message = `${provider.label} request failed: ${error.message || 'Unknown error'}. Please check API Key, model, and base URL.`;
             setResult(message, true);
             openSettings(message);
         } finally {
