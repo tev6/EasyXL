@@ -4,7 +4,7 @@
 
 用于 IXL 页面的 AI 自动答题 Tampermonkey 用户脚本：在页面上添加统一悬浮面板，通过提取题目区域的 HTML，调用可配置的模型供应商解析题目并返回答案。
 
-![1774577431317](image/README/1774577431317.png)
+<img width="2832" height="1478" alt="image" src="https://github.com/user-attachments/assets/a6b5f889-1c44-45f6-a6ea-6b036a206ac5" />
 
 ## 功能
 
