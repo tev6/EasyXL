@@ -33,7 +33,7 @@
 
 1. 打开 Tampermonkey，创建一个新脚本。
 2. 将 [easyxl.js](easyxl.js) 的完整内容粘贴进去并保存。
-3. 打开任意 IXL 练习页面（比如: https://www.ixl.com/math/algebra-1/graph-solutions-to-absolute-value-inequalities）
+3. 打开任意 IXL 练习页面，例如: https://www.ixl.com/math/algebra-1/graph-solutions-to-absolute-value-inequalities
 4. 网页右下角会出现 “EasyXL” 悬浮窗：
    - 点击右上角齿轮，选择 AI 供应商
    - 为当前供应商配置 API Key、模型和基础 URL
