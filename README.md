@@ -4,7 +4,7 @@ English | [简体中文](README-cn.md)
 
 Tampermonkey userscript for AI-assisted solving on IXL pages. It adds a unified floating panel, extracts the question-area HTML, and sends it to a configurable model provider to produce an answer.
 
-![1774577431317](image/README/1774577431317.png)
+<img width="2832" height="1478" alt="image" src="https://github.com/user-attachments/assets/9f75b78f-19a4-410a-91a8-a8834edb207a" />
 
 ## Features
 
